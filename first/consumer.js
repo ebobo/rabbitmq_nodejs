@@ -14,7 +14,8 @@ const connect = async () => {
     channel.consume(queue, (msg) => {
       const input = JSON.parse(msg.content.toString());
       console.log(' [c] Received %s', input.number);
-      if (input.number === 29) {
+      if (input.number == 29) {
+        console.log(' acking');
         channel.ack(msg);
       }
     });
