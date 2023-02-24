@@ -10,6 +10,8 @@ const connect = async () => {
     const channel = await connection.createChannel();
     // Create queue if it doesn't exist
     await channel.assertQueue(queue, { durable: true });
+    // Tell RabbitMQ not to give more than one message to a worker at a time
+    channel.prefetch(1);
     // Consume messages
     channel.consume(
       queue,
@@ -20,7 +22,7 @@ const connect = async () => {
           console.log(' [c] Done');
           // Acknowledge message as processed
           channel.ack(msg);
-        }, 3000);
+        }, 8000);
       },
       { noAck: false }
     );
