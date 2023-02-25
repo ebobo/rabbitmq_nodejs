@@ -1,14 +1,22 @@
 const amqp = require('amqplib');
 
+// Get message from command line
+const args = process.argv.slice(2);
+
+if (args.length == 0) {
+  console.log('Usage: receive_logs_direct.js [info] [warning] [error]');
+  process.exit(1);
+}
+
 const connect = async () => {
   try {
     // Create connection to RabbitMQ
     const connection = await amqp.connect('amqp://localhost:5672');
     // Create channel
     const channel = await connection.createChannel();
-    const exchange = 'logs';
     // Create exchange if it doesn't exist
-    await channel.assertExchange(exchange, 'fanout', { durable: false });
+    const exchange = 'direct_logs';
+    await channel.assertExchange(exchange, 'direct', { durable: false });
 
     // Create exclusive queue
     const q = await channel.assertQueue('', { exclusive: true });
@@ -19,7 +27,10 @@ const connect = async () => {
     );
 
     // Bind queue to exchange
-    channel.bindQueue(q.queue, exchange, '');
+    args.forEach((severity) => {
+      console.log(' [x] Binding queue with routing key %s', severity);
+      channel.bindQueue(q.queue, exchange, severity);
+    });
 
     // Consume messages
     channel.consume(
